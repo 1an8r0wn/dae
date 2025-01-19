@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/daeuniverse/dae/common/consts"
-	"github.com/daeuniverse/softwind/netproxy"
-	"github.com/daeuniverse/softwind/pkg/fastrand"
-	"github.com/daeuniverse/softwind/pool"
+	"github.com/daeuniverse/outbound/netproxy"
+	"github.com/daeuniverse/outbound/pkg/fastrand"
+	"github.com/daeuniverse/outbound/pool"
 	dnsmessage "github.com/miekg/dns"
 )
 
@@ -207,8 +207,7 @@ func resolve(ctx context.Context, d netproxy.Dialer, dns netip.AddrPort, host st
 	}
 
 	// Dial and write.
-	cd := &netproxy.ContextDialerConverter{Dialer: d}
-	c, err := cd.DialContext(ctx, network, dns.String())
+	c, err := d.DialContext(ctx, network, dns.String())
 	if err != nil {
 		return nil, err
 	}

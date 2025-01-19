@@ -22,7 +22,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/daeuniverse/softwind/netproxy"
+	"github.com/daeuniverse/outbound/netproxy"
 
 	internal "github.com/daeuniverse/dae/pkg/ebpf_internal"
 	dnsmessage "github.com/miekg/dns"
@@ -469,13 +469,14 @@ nextLink:
 	return Deduplicate(defaultIfs), nil
 }
 
-func MagicNetwork(network string, mark uint32) string {
-	if mark == 0 {
+func MagicNetwork(network string, mark uint32, mptcp bool) string {
+	if mark == 0 && !mptcp {
 		return network
 	} else {
 		return netproxy.MagicNetwork{
 			Network: network,
 			Mark:    mark,
+			Mptcp:   mptcp,
 		}.Encode()
 	}
 }
