@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/daeuniverse/dae/common/consts"
-	"github.com/daeuniverse/softwind/netproxy"
-	"github.com/daeuniverse/softwind/pkg/fastrand"
-	"github.com/daeuniverse/softwind/pool"
+	"github.com/daeuniverse/outbound/netproxy"
+	"github.com/daeuniverse/outbound/pkg/fastrand"
+	"github.com/daeuniverse/outbound/pool"
 	dnsmessage "github.com/miekg/dns"
 )
 
@@ -140,6 +140,25 @@ func ResolveNS(ctx context.Context, d netproxy.Dialer, dns netip.AddrPort, host 
 	return records, nil
 }
 
+func ResolveSOA(ctx context.Context, d netproxy.Dialer, dns netip.AddrPort, host string, network string) (records []string, err error) {
+	typ := dnsmessage.TypeSOA
+	resources, err := resolve(ctx, d, dns, host, typ, network)
+	if err != nil {
+		return nil, err
+	}
+	for _, ans := range resources {
+		if ans.Header().Rrtype != typ {
+			continue
+		}
+		ns, ok := ans.(*dnsmessage.SOA)
+		if !ok {
+			return nil, ErrBadDnsAns
+		}
+		records = append(records, ns.Ns)
+	}
+	return records, nil
+}
+
 func resolve(ctx context.Context, d netproxy.Dialer, dns netip.AddrPort, host string, typ uint16, network string) (ans []dnsmessage.RR, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -207,8 +226,7 @@ func resolve(ctx context.Context, d netproxy.Dialer, dns netip.AddrPort, host st
 	}
 
 	// Dial and write.
-	cd := &netproxy.ContextDialerConverter{Dialer: d}
-	c, err := cd.DialContext(ctx, network, dns.String())
+	c, err := d.DialContext(ctx, network, dns.String())
 	if err != nil {
 		return nil, err
 	}
